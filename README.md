@@ -9,11 +9,12 @@
 ## Table of contents
 
 1. [What this router is](#1-what-this-router-is)
-2. [Quick start — connect and secure](#2-quick-start--connect-and-secure)
-3. [Recommended reading order](#3-recommended-reading-order)
-4. [What was optimized (summary)](#4-what-was-optimized-summary)
-5. [Files in this folder](#5-files-in-this-folder)
-6. [If something breaks](#6-if-something-breaks)
+2. [Prerequisites](#2-prerequisites)
+3. [Quick start — connect and secure](#3-quick-start--connect-and-secure)
+4. [Recommended reading order](#4-recommended-reading-order)
+5. [What was optimized (summary)](#5-what-was-optimized-summary)
+6. [Files in this folder](#6-files-in-this-folder)
+7. [If something breaks](#7-if-something-breaks)
 
 ---
 
@@ -36,11 +37,54 @@ carrier-specific features (SMS, USSD, VoLTE, SIM management).
 
 ---
 
-## 2. Quick start — connect and secure
+## 2. Prerequisites
+
+### All platforms
+
+| Requirement | How to check | Notes |
+|---|---|---|
+| **Python 3.7+** | `python3 --version` (Linux/macOS) or `python --version` (Windows) | No third-party packages needed — stdlib only |
+| **Network access to router** | `ping 192.168.1.1` or open `https://192.168.1.1/` in browser | Must be on the same LAN (Wi-Fi or Ethernet) |
+| **Admin password** | Printed on device label | Default is on the sticker under the router |
+| **batch-a.py** | Download from this repo | The remediation script |
+
+### Platform-specific notes
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt install python3
+```
+
+**macOS:**
+```bash
+brew install python3
+# or use the system Python: /usr/bin/python3
+```
+
+**Windows:**
+1. Download Python from https://www.python.org/downloads/
+2. During installation, check **"Add Python to PATH"**
+3. Verify: open Command Prompt and run `python --version`
+4. If `python` doesn't work, try `py --version` or `python3 --version`
+
+### SSH access (optional, for advanced fixes)
+
+SSH is **disabled by default** on this router. To enable it:
+1. Run `python3 batch-a.py --step 9` (enables SSH via the vendor toggle)
+2. Or manually: More → System → Service → SSH Switch → enable
+
+**SSH clients by platform:**
+- **Linux/macOS:** built-in `ssh` command
+- **Windows 10+:** built-in OpenSSH (enable in Settings → Apps → Optional Features → OpenSSH Client)
+- **Windows (older):** PuTTY (https://www.putty.org/) or Windows Terminal
+
+---
+
+## 3. Quick start — connect and secure
 
 ### Step 0: Connect
 1. Plug in the router, wait 2 minutes for boot
-2. Connect to Wi-Fi: SSID `[REDACTED_SSID_2G]` (2.4 GHz) or `[REDACTED_SSID_2G]5` (5 GHz)
+2. Connect to Wi-Fi: SSID `[REDACTED_SSID_2G]` (2.4 GHz) or `[REDACTED_SSID_5G]` (5 GHz)
 3. Password: `[REDACTED_WPA_PSK]` (change this immediately!)
 4. Open browser: `https://192.168.1.1/cgi-bin/luci/`
 5. Login with `admin` / (password on device label)
@@ -48,9 +92,9 @@ carrier-specific features (SMS, USSD, VoLTE, SIM management).
 ### Step 1: Change the admin password (do this first)
 More → System → **Password** → enter current password → new password (20+ chars) → Save
 
-### Step 2: Install the remediation script
-Copy `batch-a.py` to your laptop. You need Python 3.7+ (no packages required).
+### Step 2: Run the remediation script
 
+**Linux / macOS (Bash):**
 ```bash
 export ROUTER_PW='your-new-password'
 cd /path/to/batch-a.py
@@ -59,7 +103,30 @@ python3 batch-a.py --step 1     # apply first fix
 python3 batch-a.py --verify     # check state
 ```
 
+**Windows (Command Prompt):**
+```cmd
+set ROUTER_PW=your-new-password
+cd C:\path\to\batch-a.py
+python batch-a.py --dry-run
+python batch-a.py --step 1
+python batch-a.py --verify
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:ROUTER_PW = "your-new-password"
+cd C:\path\to\batch-a.py
+python batch-a.py --dry-run
+python batch-a.py --step 1
+python batch-a.py --verify
+```
+
+> **Note:** On Windows, replace `python3` with `python` in all commands.
+> If `python` doesn't work, try `py` (the Python launcher).
+
 ### Step 3: Run all remediation steps
+
+**Linux / macOS:**
 ```bash
 # Security (no disruption)
 python3 batch-a.py --step 1     # firewall + SSH wildcard
@@ -90,21 +157,23 @@ python3 batch-a.py --step 5     # widths/channels
 python3 batch-a.py --verify
 ```
 
+**Windows (Command Prompt / PowerShell):** same commands, replace `python3` with `python`.
+
 ### Step 4: Fix cosmetic items via web UI
-- **SSIDs:** My Wi-Fi → Basic Settings → rename from `[REDACTED_SSID_2G]`/`[REDACTED_SSID_2G]5`, set different passwords per band
+- **SSIDs:** My Wi-Fi → Basic Settings → rename from `[REDACTED_SSID_2G]`/`[REDACTED_SSID_5G]`, set different passwords per band
 - **Hostname:** More → System → (hostname field) → change from `MobileRouter`
 - **Timezone:** More → System → Network Time → set to `Africa/Tunis`
 - **Guest network:** My Wi-Fi → Guest → enable with a password (isolated, vendor-built)
 
 ---
 
-## 3. Recommended reading order
+## 4. Recommended reading order
 
 If you want to understand what was done and why:
 
 | Order | File | What it covers | Lines |
 |---|---|---|---|
-| 1 | **This file (README)** | Quick start, overview | ~100 |
+| 1 | **This file (README)** | Quick start and overview | ~220 |
 | 2 | `dlink-ui-guide.md` | The vendor's custom web UI — where every setting actually lives | 193 |
 | 3 | `batch-a-guide.md` | The remediation script — 13 steps, how to run, troubleshooting | 319 |
 | 4 | `router-audit-report.md` | Full audit — 26 findings with evidence, methodology, all extracted data | 701 |
@@ -114,17 +183,17 @@ Read `router-audit-report.md` if you want the full technical deep-dive.
 
 ---
 
-## 4. What was optimized (summary)
+## 5. What was optimized (summary)
 
 ### Security (fixed)
 - ✅ Admin UI fenced to LAN zone (was exposed to WAN via wildcard rules)
 - ✅ SSH wildcard reject rule disabled (was blocking SSH from everywhere)
 - ✅ Password auth enabled in dropbear (was off, contradictory with RootPasswordAuth=on)
-- ✅ `/etc/config/system` permissions noted (was world-writable — needs shell to fix)
 - ✅ DNS rebind protection enabled
 - ✅ Debug daemons disabled (wfa_dut, meta_tst, telnetd, vsftpd, xl2tpd, easycwmpd)
 - ✅ Adblock disabled (was enabled with zero source lists)
 - ✅ DDNS placeholder entries deleted
+- ⚠️ `/etc/config/system` is world-writable (`chmod o+rw` in rc.local) — needs SSH to fix
 
 ### Performance (fixed)
 - ✅ TKIP removed from both radios (was capping 5 GHz at 802.11g speeds)
@@ -141,26 +210,24 @@ Read `router-audit-report.md` if you want the full technical deep-dive.
 - ✅ 5 GHz radio now carries traffic (was 0 bytes since boot)
 
 ### Not fixed (no UI or requires shell)
-- ⚠️ `/etc/config/system` is world-writable (`chmod o+rw` in rc.local) — needs SSH
 - ⚠️ PMF (802.11w) disabled — no UI option
 - ⚠️ Client isolation disabled — no UI option
 - ⚠️ DTIM period = 1 (battery drain) — no UI option
 - ⚠️ DFS detection disabled on 5 GHz — no UI option
-- ⚠️ SSH is now working (enabled via vendor toggle + firewall fix)
 
 ### Cosmetic (do via web UI)
-- SSIDs: `[REDACTED_SSID_2G]` / `[REDACTED_SSID_2G]5` → rename
+- SSIDs: `[REDACTED_SSID_2G]` / `[REDACTED_SSID_5G]` → rename
 - Hostname: `MobileRouter` → rename
 - Timezone: `Etc/GMT-1` → `Africa/Tunis`
 - Guest network: disabled → enable with password
 
 ---
 
-## 5. Files in this folder
+## 6. Files in this folder
 
 | File | Purpose | Lines |
 |---|---|---|
-| `README.md` | This file — quick start and overview | ~100 |
+| `README.md` | This file — quick start and overview | ~220 |
 | `batch-a.py` | Remediation script (13 steps, ubus API) | ~600 |
 | `batch-a-guide.md` | How to run batch-a.py, step descriptions, troubleshooting | 319 |
 | `dlink-ui-guide.md` | Vendor web UI navigation guide (corrected paths) | 193 |
@@ -168,12 +235,12 @@ Read `router-audit-report.md` if you want the full technical deep-dive.
 
 ---
 
-## 6. If something breaks
+## 7. If something breaks
 
 ### SSH is locked out
 - The web UI still works: `https://192.168.1.1/cgi-bin/luci/`
 - Login as `admin` (or `root`) and re-enable SSH: More → System → Service → SSH Switch
-- Or re-run: `python3 batch-a.py --step 9`
+- Or re-run: `python3 batch-a.py --step 9` (Linux/macOS) or `python batch-a.py --step 9` (Windows)
 
 ### Wi-Fi stopped working
 - My Wi-Fi → Basic Settings → check that both 2.4G and 5G are enabled
@@ -191,13 +258,25 @@ Read `router-audit-report.md` if you want the full technical deep-dive.
 - Network changes: `/etc/init.d/network restart`
 - Wi-Fi changes: `wifi reload`
 
+### SSH access (Windows)
+
+**Windows 10/11 (built-in OpenSSH):**
+1. Open Settings → Apps → Optional Features → OpenSSH Client → Install
+2. Open Command Prompt or PowerShell
+3. Run: `ssh admin@192.168.1.1`
+
+**Windows (PuTTY):**
+1. Download PuTTY from https://www.putty.org/
+2. Enter `192.168.1.1` as host, port 22, connection type SSH
+3. Login as `admin` with your password
+
 ### Full reset (last resort)
 - More → System → Backup/Reset → Restore Factory Settings
 - This wipes ALL changes including UCI. You'll need to re-run the remediation.
 
 ### Reboot schedule
 Three daily reboots are configured (12 AM, 3 AM, 6 PM) via cron.
-To remove: `ssh admin@192.168.1.1 'echo "" > /etc/crontabs/root; /etc/init.d/cron restart'`
+To remove: `ssh admin@192.168.1.1` then `echo "" > /etc/crontabs/root; /etc/init.d/cron restart`
 
 ---
 

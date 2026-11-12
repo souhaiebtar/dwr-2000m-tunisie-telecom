@@ -37,6 +37,26 @@ python3 batch-a.py --step 1
 python3 batch-a.py --verify
 ```
 
+**Windows (Command Prompt):**
+```cmd
+cd C:\path\to\batch-a.py
+set ROUTER_PW=your-admin-password
+python batch-a.py --dry-run
+python batch-a.py --step 1
+python batch-a.py --verify
+```
+
+**Windows (PowerShell):**
+```powershell
+cd C:\path\to\batch-a.py
+$env:ROUTER_PW = "your-admin-password"
+python batch-a.py --dry-run
+python batch-a.py --step 1
+python batch-a.py --verify
+```
+
+> On Windows, replace `python3` with `python` in all commands.
+
 ## Command-line options
 
 | Flag | Description |
@@ -150,7 +170,11 @@ memory and startup time.
 3. Disables the wildcard SSH reject rule (`cfg1192bd`)
 4. Sets `dropbear.PasswordAuth='on'` (was off, contradicting RootPasswordAuth=on)
 
-After this step, `ssh admin@192.168.1.1` works from the LAN.
+**SSH access after step 9:**
+
+- **Linux/macOS:** `ssh admin@192.168.1.1`
+- **Windows 10/11:** Enable OpenSSH Client (Settings → Apps → Optional Features), then `ssh admin@192.168.1.1` in Command Prompt or PowerShell
+- **Windows (PuTTY):** Host `192.168.1.1`, port 22, connection type SSH, login as `admin`
 **Disruption:** None (SSH was already unreachable).
 **Note:** Test the password while the web UI is still open. If dropbear rejects
 it, you can still fix things via the web UI or ubus.
@@ -302,7 +326,8 @@ python3 batch-a.py --verify
 ## Troubleshooting
 
 **"set ROUTER_PW first"** — The script requires the password in the environment.
-Run `export ROUTER_PW='your-password'` before invoking.
+Run `export ROUTER_PW='your-password'` before invoking (Linux/macOS).
+On Windows: `set ROUTER_PW=your-password` (CMD) or `$env:ROUTER_PW = "your-password"` (PowerShell).
 
 **Login fails** — Check that the router is reachable: `curl -sk https://192.168.1.1/`.
 If you changed the password via the web UI, update `ROUTER_PW`.
